@@ -48,3 +48,19 @@ where customer_code = 90002002
 group by s.date
 order by s.date asc;
 ```
+### 3. Total Gross Sales Amount Report For Croma - By Fiscal Year
+
+```
+select
+get_fiscal_year(date) as fiscal_year,
+round(SUM(g.gross_price*s.sold_quantity)/1000000,2) as yearly_sales_in_mln
+from fact_sales_monthly s
+join fact_gross_price g
+on 
+ g.fiscal_year=get_fiscal_year(s.date) and
+ g.product_code=s.product_code
+where
+	customer_code=90002002
+group by get_fiscal_year(date)
+order by fiscal_year;
+```
