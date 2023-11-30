@@ -17,4 +17,19 @@ AtliQ Hardware is a renowned hardware company specializing in PCs, printers, mic
 - Specific questions related to sales reports, market analysis, customer behavior, and predicting supply chain needs will be addressed.
 
 ### 1. Croma India Product Wise Sales Report for Fiscal Year -2021
-- [Insert details and findings related to the specified report here.]
+
+```
+Select 
+ s.date, s.product_code, p.product, p.variant, s.sold_quantity,
+ g.gross_price, ROUND(g.gross_price*s.sold_quantity,2) as gross_price_total
+from fact_sales_monthly s
+join dim_product p
+on p.product_code= s.product_code
+join fact_gross_price g
+on g.product_code= s.product_code
+and g.fiscal_year= get_fiscal_year(s.date)
+where 
+  customer_code=90002002 AND
+            get_fiscal_year(date)=2021 
+	ORDER BY date asc;
+```
