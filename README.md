@@ -35,6 +35,7 @@ where
 ```
 
 ### 2. Total Gross Sales Amount Report For Croma - By Monthly
+
 ```
 select 
 YEAR(s.date) AS year,
@@ -48,6 +49,7 @@ where customer_code = 90002002
 group by s.date
 order by s.date asc;
 ```
+
 ### 3. Total Gross Sales Amount Report For Croma - By Fiscal Year
 
 ```
@@ -64,3 +66,168 @@ where
 group by get_fiscal_year(date)
 order by fiscal_year;
 ```
+
+### 4. Top 5 Customers for the Financial Year - 2021
+
+```
+select
+c.customer, round(sum(net_sales)/1000000,2)  as net_sales_mln
+FROM net_sales n
+join dim_customer c
+on n.customer_code=c.customer_code
+where fiscal_year=2021
+group by c.customer
+order by net_sales_mln desc
+limit 5;
+```
+
+### 5. Top 5 Products for the Financial Year - 2021
+
+```
+select
+product, round(sum(net_sales)/1000000,2)  as net_sales_mln
+FROM net_sales
+where fiscal_year=2021
+group by product
+order by net_sales_mln desc
+limit 5;
+```
+
+### 6. Top 5 Markets for the Financial Year - 2021
+
+```
+select 
+market, round(sum(net_sales)/1000000,2)  as net_sales_mln
+FROM net_sales
+where fiscal_year=2021
+group by market
+order by net_sales_mln desc
+limit 5;
+```
+
+### 7. Top 10 Customers by Net Sales % in Financial Year - 2021
+
+```
+with cte1 as (
+select 
+customer, 
+round(sum(net_sales)/1000000,2) as net_sales_mln
+from net_sales s
+join dim_customer c
+on s.customer_code=c.customer_code
+where 
+s.fiscal_year=2021
+group by customer)
+
+select *,
+ net_sales_mln*100/sum(net_sales_mln) over()as net_sales_pct 
+ from cte1
+order by net_sales_pct  desc
+limit 10;
+```
+
+### 8. Top 10 Customers by Net Sales % in APAC Region & Financial Year - 2021
+
+```
+with cte1 as (
+select 
+c.customer, c.region,
+round(sum(net_sales)/1000000,2) as net_sales_mln
+from net_sales s
+join dim_customer c
+on s.customer_code=c.customer_code
+and s.market=c.market
+where 
+s.fiscal_year=2021 AND c.region = "APAC"
+group by c.region, c.customer)
+
+select *,
+ net_sales_mln*100/sum(net_sales_mln) over(partition by region )as pct_share_region
+ from cte1
+order by region,pct_share_region desc
+limit 10;
+```
+
+### 9. Top 2 Markets in Across Region w.r.t their Gross Sales in Financial Year - 2021
+
+```
+SET SQL_MODE="";
+with cte1 as 
+		(select
+                     c.market,
+                     c.region,
+                     round(sum(gross_price_total)/1000000,2) as gross_sales_mln
+                from gross_sales g
+                join dim_customer c 
+                      on c.customer_code=g.customer_code
+                where fiscal_year=2021
+                group by market),
+           cte2 as 
+	        (select 
+                     *,
+                     dense_rank() over (partition by region order by gross_sales_mln desc) as drnk
+                from cte1)
+	select * from cte2 where drnk<=2;
+```
+
+### 10. Supply Chain Statistics Financial Year - 2021
+
+```
+SET SQL_MODE="";
+WITH forecast_err_table as (
+SELECT 
+ s.customer_code,
+ sum(s.sold_quantity) as total_sold_qty,
+ sum(s.forecast_quantity) as total_forecast_qty,
+ ROUND(SUM((forecast_quantity- sold_quantity)),2) as net_err,
+ ROUND(SUM((forecast_quantity- sold_quantity))*100/ SUM(forecast_quantity),2)as net_err_pct,
+ ROUND(SUM(abs(forecast_quantity- sold_quantity)),2) as abs_err,
+ ROUND(SUM(abs(forecast_quantity- sold_quantity))*100/ SUM(forecast_quantity),2) as abs_err_pct
+FROM gdb0041.fact_act_est s
+where s.fiscal_year=2021
+group by s.customer_code 
+order by abs_err_pct desc)
+
+Select 
+e.*,  c.customer, c.market,
+ if(abs_err_pct > 100, 0 , (100- abs_err_pct)) as forecast_accuracy
+from forecast_err_table e
+join dim_customer c
+using (customer_code)
+order by forecast_accuracy desc;
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
