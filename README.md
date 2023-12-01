@@ -237,7 +237,7 @@ order by forecast_accuracy desc;
 END
 ```
 
-### 2. determine the market badge if tota_qty > 5 million, then gold  else it is a silver by market and year
+### 2. determine the market badge if tota1_qty > 5 million, then gold  else it is a silver by market and year
 
 ```
 CREATE DEFINER=`root`@`localhost` PROCEDURE `get_market_badge`(
@@ -276,28 +276,146 @@ BEGIN
 END
 ```
 
+### 3. Getting monthly gross sales for customers
 
+```
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_monthly_gross_sales_for_customer`(in_customer_codes TEXT)
+BEGIN
+select s.date,SUM(Round(g.gross_price*s.sold_quantity,2)) as monthly_sales
+from fact_sales_monthly s
+join fact_gross_price g
+on g.product_code= s.product_code
+and g.fiscal_year= get_fiscal_year(s.date)
+where FIND_IN_SET(s.customer_code, in_customer_codes)>0
+group by date;
 
+END
+```
 
+### 4. Determining top N customers w.r.t net sales using fiscal year 
 
+```
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_top_n_customers_by_net_sales`(
+in_fiscal_year INT,
+in_top_n INT
+)
+BEGIN
+	select 
+	c.customer, round(sum(net_sales)/1000000,2)  as net_sales_mln
+	FROM net_sales n
+    join dim_customer c
+    on n.customer_code=c.customer_code
+	where fiscal_year= in_fiscal_year
+	group by c.customer
+	order by net_sales_mln desc
+	limit in_top_n;
+END
+```
 
+### 5. Determining Top N customers w.r.t market and net sales 
 
+```
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_top_n_customers_w.r.t_market_by_net_sales`(
+        	in_market VARCHAR(45),
+        	in_fiscal_year INT,
+    		in_top_n INT
+	)
+BEGIN
+        	select 
+                     customer, 
+                     round(sum(net_sales)/1000000,2) as net_sales_mln
+        	from net_sales s
+        	join dim_customer c
+                on s.customer_code=c.customer_code
+        	where 
+		    s.fiscal_year=in_fiscal_year 
+		    and s.market=in_market
+        	group by customer
+        	order by net_sales_mln desc
+        	limit in_top_n;
+	END
+```
 
+### 6. Determining Top N markets by net sales
 
+```
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_top_n_markets_by_net_sales`(
+in_fiscal_year INT,
+in_top_n INT
+)
+BEGIN
+	select 
+	market, round(sum(net_sales)/1000000,2)  as net_sales_mln
+	FROM net_sales
+	where fiscal_year= in_fiscal_year
+	group by market
+	order by net_sales_mln desc
+	limit in_top_n;
+END
+```
 
+### 7. Determining Top N products by  net sales
 
+```
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_top_n_products_by_net_sales`(
+in_fiscal_year INT,
+in_top_n INT
+)
+BEGIN
+	select 
+	product, round(sum(net_sales)/1000000,2)  as net_sales_mln
+	FROM net_sales
+	where fiscal_year= in_fiscal_year
+	group by product
+	order by net_sales_mln desc
+	limit in_top_n;
+END
+```
 
+### 8. Determining Top N products per Division by Sold Quantity
 
+```
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_top_n_products_per_division_by_qty_sold`(
+in_fiscal_year INT,
+in_top_n INT
+)
+BEGIN
+with cte1 as 
+		(select
+                     p.division,
+                     p.product,
+                     sum(sold_quantity) as total_qty
+                from fact_sales_monthly s
+                join dim_product p
+                      on p.product_code=s.product_code
+                where fiscal_year=in_fiscal_year
+                group by p.product ),
+           cte2 as 
+	        (select 
+                     *,
+                     dense_rank() over (partition by division order by total_qty desc) as drnk
+                from cte1)
+	select * from cte2 where drnk<=in_top_n;
+END
+```
 
+### 9. Determining Top N markets by Net Sales 
 
-
-
-
-
-
-
-
-
+```
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_top_n_markets_by_net_sales`(
+in_fiscal_year INT,
+in_top_n INT
+)
+BEGIN
+	select 
+	market, round(sum(net_sales)/1000000,2)  as net_sales_mln
+	FROM net_sales
+	where fiscal_year= in_fiscal_year
+	group by market
+	order by net_sales_mln desc
+	limit in_top_n;
+END
+```
 
 
 
