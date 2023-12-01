@@ -417,7 +417,161 @@ BEGIN
 END
 ```
 
+## Views
 
+### 1. Gross Sales
 
+```
+CREATE 
+    ALGORITHM = UNDEFINED 
+    DEFINER = `root`@`localhost` 
+    SQL SECURITY DEFINER
+VIEW `gross_sales` AS
+    SELECT 
+        `s`.`date` AS `date`,
+        `s`.`fiscal_year` AS `fiscal_year`,
+        `c`.`market` AS `market`,
+        `s`.`customer_code` AS `customer_code`,
+        `s`.`product_code` AS `product_code`,
+        `p`.`product` AS `product`,
+        `p`.`variant` AS `variant`,
+        `s`.`sold_quantity` AS `sold_quantity`,
+        `g`.`gross_price` AS `gross_price_per_item`,
+        ROUND((`s`.`sold_quantity` * `g`.`gross_price`),
+                2) AS `gross_price_total`
+    FROM
+        ((((`fact_sales_monthly` `s`
+        JOIN `dim_customer` `c` ON ((`s`.`customer_code` = `c`.`customer_code`)))
+        JOIN `dim_product` `p` ON ((`s`.`product_code` = `p`.`product_code`)))
+        JOIN `fact_gross_price` `g` ON (((`g`.`fiscal_year` = `s`.`fiscal_year`)
+            AND (`g`.`product_code` = `s`.`product_code`))))
+        JOIN `fact_pre_invoice_deductions` `pre` ON (((`pre`.`customer_code` = `s`.`customer_code`)
+            AND (`pre`.`fiscal_year` = `s`.`fiscal_year`))))
+```
 
+### 2. Net Sales 
 
+```
+CREATE 
+    ALGORITHM = UNDEFINED 
+    DEFINER = `root`@`localhost` 
+    SQL SECURITY DEFINER
+VIEW `net_sales` AS
+    SELECT 
+        `sales_postinv_discount`.`date` AS `date`,
+        `sales_postinv_discount`.`fiscal_year` AS `fiscal_year`,
+        `sales_postinv_discount`.`customer_code` AS `customer_code`,
+        `sales_postinv_discount`.`market` AS `market`,
+        `sales_postinv_discount`.`product_code` AS `product_code`,
+        `sales_postinv_discount`.`product` AS `product`,
+        `sales_postinv_discount`.`variant` AS `variant`,
+        `sales_postinv_discount`.`sold_quantity` AS `sold_quantity`,
+        `sales_postinv_discount`.`gross_price_total` AS `gross_price_total`,
+        `sales_postinv_discount`.`pre_invoice_discount_pct` AS `pre_invoice_discount_pct`,
+        `sales_postinv_discount`.`net_invoice_sales` AS `net_invoice_sales`,
+        `sales_postinv_discount`.`post_invoice_discount_pct` AS `post_invoice_discount_pct`,
+        (`sales_postinv_discount`.`net_invoice_sales` * (1 - `sales_postinv_discount`.`post_invoice_discount_pct`)) AS `net_sales`
+    FROM
+        `sales_postinv_discount`
+```
+
+### 3. Sales ( Post Invoice Discount )
+
+```
+CREATE 
+    ALGORITHM = UNDEFINED 
+    DEFINER = `root`@`localhost` 
+    SQL SECURITY DEFINER
+VIEW `sales_postinv_discount` AS
+    SELECT 
+        `s`.`date` AS `date`,
+        `s`.`fiscal_year` AS `fiscal_year`,
+        `s`.`customer_code` AS `customer_code`,
+        `s`.`market` AS `market`,
+        `s`.`product_code` AS `product_code`,
+        `s`.`product` AS `product`,
+        `s`.`variant` AS `variant`,
+        `s`.`sold_quantity` AS `sold_quantity`,
+        `s`.`gross_price_total` AS `gross_price_total`,
+        `s`.`pre_invoice_discount_pct` AS `pre_invoice_discount_pct`,
+        (`s`.`gross_price_total` - (`s`.`pre_invoice_discount_pct` * `s`.`gross_price_total`)) AS `net_invoice_sales`,
+        (`po`.`discounts_pct` + `po`.`other_deductions_pct`) AS `post_invoice_discount_pct`
+    FROM
+        (`sales_preinv_discount` `s`
+        JOIN `fact_post_invoice_deductions` `po` ON (((`po`.`customer_code` = `s`.`customer_code`)
+            AND (`po`.`product_code` = `s`.`product_code`)
+            AND (`po`.`date` = `s`.`date`))))
+```
+
+### 4. Sales ( Pre Invoice Discount )
+
+```
+CREATE 
+    ALGORITHM = UNDEFINED 
+    DEFINER = `root`@`localhost` 
+    SQL SECURITY DEFINER
+VIEW `sales_preinv_discount` AS
+    SELECT 
+        `s`.`date` AS `date`,
+        `s`.`fiscal_year` AS `fiscal_year`,
+        `s`.`customer_code` AS `customer_code`,
+        `c`.`market` AS `market`,
+        `s`.`product_code` AS `product_code`,
+        `p`.`product` AS `product`,
+        `p`.`variant` AS `variant`,
+        `s`.`sold_quantity` AS `sold_quantity`,
+        `g`.`gross_price` AS `gross_price_per_item`,
+        ROUND((`s`.`sold_quantity` * `g`.`gross_price`),
+                2) AS `gross_price_total`,
+        `pre`.`pre_invoice_discount_pct` AS `pre_invoice_discount_pct`
+    FROM
+        ((((`fact_sales_monthly` `s`
+        JOIN `dim_customer` `c` ON ((`s`.`customer_code` = `c`.`customer_code`)))
+        JOIN `dim_product` `p` ON ((`s`.`product_code` = `p`.`product_code`)))
+        JOIN `fact_gross_price` `g` ON (((`g`.`fiscal_year` = `s`.`fiscal_year`)
+            AND (`g`.`product_code` = `s`.`product_code`))))
+        JOIN `fact_pre_invoice_deductions` `pre` ON (((`pre`.`customer_code` = `s`.`customer_code`)
+            AND (`pre`.`fiscal_year` = `s`.`fiscal_year`))))
+```
+
+## Functions
+
+### 1. Determining Fiscal Quarter
+
+```
+CREATE DEFINER=`root`@`localhost` FUNCTION `get_fiscal_quarter`(
+calendar_date date
+) RETURNS char(2) CHARSET utf8mb4
+    DETERMINISTIC
+BEGIN
+  declare m TINYINT;
+  declare qtr CHAR(2);
+  SET m=month(calendar_date) ;
+  
+  CASE
+    when m in (9,10,11) then
+      SET qtr= "Q1";
+	when m in (12,1,2) then
+      SET qtr= "Q2";
+	when m in (3,4,5) then
+      SET qtr= "Q3";
+	when m in (6,7,8) then
+      SET qtr= "Q4";
+  END CASE;
+return qtr;
+END
+```
+
+### 2. Determing Fiscal year
+
+```
+CREATE DEFINER=`root`@`localhost` FUNCTION `get_fiscal_year`(
+calendar_date date
+) RETURNS int
+    DETERMINISTIC
+BEGIN
+  declare fiscal_year INT;
+  SET fiscal_year=YEAR(DATE_ADD(calendar_date, INTERVAL 4 MONTH)) ;
+  return fiscal_year;
+END
+```
