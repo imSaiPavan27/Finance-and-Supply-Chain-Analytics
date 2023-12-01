@@ -19,7 +19,7 @@ AtliQ Hardware is a renowned hardware company specializing in PCs, printers, mic
 - The database includes details about sales, products, customers, and regions for AtliQ Hardware.
 - Specific questions related to sales reports, market analysis, customer behavior, and predicting supply chain needs will be addressed.
 
-## Key Takeaways:
+## Key Takeaways
 - Used Common Table Expression technique (CTE)
 - Worked with User-Defined Functions
 - Created Database Views
@@ -29,6 +29,13 @@ AtliQ Hardware is a renowned hardware company specializing in PCs, printers, mic
 - Used Temporary Tables
 - Worked with Indexes and Database Creation/Update
 - Understood Data Integrity and Entity-Relationship Diagrams (ERD)
+
+## Insights
+- Amazon had the highest net sales in fiscal year 2021, reaching 109.03M, followedby AtliQ Exclusive with 79.92M.
+- The Indian market brought in the most net sales in fiscal year 2021, totaling210.67M, with the USA following at 132.05M.
+- Amazon made up 13.23% of the total net sales across all customers in the fiscalyear 2021.
+- In the APAC region, Amazon had the highest percentage of net sales, accountingfor 12.99% among all customers in 2021.
+- Among APAC countries, India ranked first in total gross sales amount.
 
 ## General Queries
 
