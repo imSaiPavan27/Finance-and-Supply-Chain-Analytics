@@ -1,6 +1,6 @@
 # Finance-and-Supply-Chain-Analytics
 
-### **Link to  Presentaion** : [Linkedin Post]([https://www.linkedin.com/feed/update/urn:li:activity:7117530718058008576/](https://www.linkedin.com/posts/saipavankumar27_presentation-activity-7135624283686408192-neDB?utm_source=share&utm_medium=member_desktop))
+### **Link to  Presentaion** : [Linkedin Post](https://www.linkedin.com/feed/update/urn:li:activity:7117530718058008576/](https://www.linkedin.com/posts/saipavankumar27_presentation-activity-7135624283686408192-neDB?utm_source=share&utm_medium=member_desktop)
 
 
 # Project Overview
