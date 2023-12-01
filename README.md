@@ -16,6 +16,8 @@ AtliQ Hardware is a renowned hardware company specializing in PCs, printers, mic
 - The database includes details about sales, products, customers, and regions for AtliQ Hardware.
 - Specific questions related to sales reports, market analysis, customer behavior, and predicting supply chain needs will be addressed.
 
+## General Queries
+
 ### 1. Croma India Product Wise Sales Report for Fiscal Year -2021
 
 ```
@@ -197,8 +199,43 @@ using (customer_code)
 order by forecast_accuracy desc;
 ```
 
+## Stored Procedures
+
+### 1. get_forecast_accuracy
+
+```
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_forecast_accuracy`(
+in_fiscal_year INT
+)
+BEGIN
+SET SQL_MODE="";
+WITH forecast_err_table as (
+
+SELECT 
+ s.customer_code,
+ sum(s.sold_quantity) as total_sold_qty,
+ sum(s.forecast_quantity) as total_forecast_qty,
+ ROUND(SUM((forecast_quantity- sold_quantity)),2) as net_err,
+ ROUND(SUM((forecast_quantity- sold_quantity))*100/ SUM(forecast_quantity),2)as net_err_pct,
+ ROUND(SUM(abs(forecast_quantity- sold_quantity)),2) as abs_err,
+ ROUND(SUM(abs(forecast_quantity- sold_quantity))*100/ SUM(forecast_quantity),2) as abs_err_pct
+FROM gdb0041.fact_act_est s
+where s.fiscal_year=in_fiscal_year
+group by s.customer_code 
+order by abs_err_pct desc)
+
+Select 
+e.*,  c.customer, c.market,
+ if(abs_err_pct > 100, 0 , (100- abs_err_pct)) as forecast_accuracy
+from forecast_err_table e
+join dim_customer c
+using (customer_code)
+order by forecast_accuracy desc;
+ 
 
 
+END
+```
 
 
 
