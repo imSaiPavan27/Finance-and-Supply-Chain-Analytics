@@ -19,6 +19,17 @@ AtliQ Hardware is a renowned hardware company specializing in PCs, printers, mic
 - The database includes details about sales, products, customers, and regions for AtliQ Hardware.
 - Specific questions related to sales reports, market analysis, customer behavior, and predicting supply chain needs will be addressed.
 
+## Key Takeaways:
+- Used Common Table Expression technique (CTE)
+- Worked with User-Defined Functions
+- Created Database Views
+- Employed JOINS
+- Implemented Stored Procedures
+- Applied Window Functions like OVER, ROW_NUMBER, RANK, DENSE_RANK
+- Used Temporary Tables
+- Worked with Indexes and Database Creation/Update
+- Understood Data Integrity and Entity-Relationship Diagrams (ERD)
+
 ## General Queries
 
 ### 1. Croma India Product Wise Sales Report for Fiscal Year -2021
