@@ -2,9 +2,6 @@
 
 ### **Link to  Presentaion** : [Linkedin Post](https://www.linkedin.com/posts/saipavankumar27_presentation-activity-7135624283686408192-neDB?utm_source=share&utm_medium=member_desktop)
 
-
-# Project Overview
-
 ## Problem Statement
 - Large Excel files are causing performance issues, leading to slow and inefficient processes.
 - AtliQ Hardware aims to address this challenge by expanding its data analytics team, hiring junior data analysts.
