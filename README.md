@@ -201,7 +201,7 @@ order by forecast_accuracy desc;
 
 ## Stored Procedures
 
-### 1. get_forecast_accuracy
+### 1. Finding forecast accuracy for a given year
 
 ```
 CREATE DEFINER=`root`@`localhost` PROCEDURE `get_forecast_accuracy`(
@@ -237,9 +237,44 @@ order by forecast_accuracy desc;
 END
 ```
 
+### 2. determine the market badge if tota_qty > 5 million, then gold  else it is a silver by market and year
 
-
-
+```
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_market_badge`(
+IN in_market varchar(45), 
+IN in_fiscal_year year,
+OUT out_badge varchar(45)
+)
+BEGIN
+	declare total_qty int default  0;
+    
+    # set default market to be in india
+    
+    if in_market="" then
+     set in_market= "India";
+	end if;
+    
+    # retrieve total qty for a given market and fical year
+    
+    select 
+	 SUM(sold_quantity) into total_qty
+	from fact_sales_monthly s
+	join dim_customer c
+	on s.customer_code=c.customer_code
+	where get_fiscal_year(s.date)=in_fiscal_year
+	and c.market= in_market
+	group by c.market	;
+    
+    # determine the market badge if tota_qty > 5 million, then gold 
+    # else it is a silver
+    
+    if total_qty > 5000000 then
+     set out_badge = "Gold";
+	else 
+     set out_badge = "Silver";
+    end if; 
+END
+```
 
 
 
